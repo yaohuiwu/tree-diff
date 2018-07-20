@@ -1,6 +1,7 @@
 package com.pekall.util.tree.diff;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -348,5 +349,43 @@ public class MyTreeTest {
         assertEvent(events.poll(), MOVE, 9);
         assertEvent(events.poll(), MOVE, 10);
         assertEvent(events.poll(), CREATE, 11);
+    }
+
+    @Ignore
+    @Test
+    public void testDiffEqualDepthWithDifferentRoot() {
+
+        Tree<Integer> newTree = new MyTree<>(21);
+        Node<Integer> node2 = newTree.addNode(newTree.getRoot(), 2);
+        Node<Integer> node3 = newTree.addNode(newTree.getRoot(), 3);
+        Node<Integer> node4 = newTree.addNode(newTree.getRoot(), 4);
+
+        newTree.addNode(node2, 5);
+        newTree.addNode(node2, 6);
+
+        newTree.addNode(node3, 7);
+        newTree.addNode(node3, 8);
+
+        newTree.addNode(node4, 9);
+        newTree.addNode(node4, 10);
+
+        System.out.println(newTree);
+
+        Queue<NodeEvent<Integer>> events = oldTree.diff(newTree);
+
+        System.out.println(events);
+
+        assertEvent(events.poll(), CREATE, 21);
+        assertEvent(events.poll(), MOVE, 2);
+        assertEvent(events.poll(), MOVE, 5);
+        assertEvent(events.poll(), MOVE, 6);
+        assertEvent(events.poll(), MOVE, 3);
+        assertEvent(events.poll(), MOVE, 7);
+        assertEvent(events.poll(), MOVE, 8);
+        assertEvent(events.poll(), MOVE, 4);
+        assertEvent(events.poll(), MOVE, 9);
+        assertEvent(events.poll(), MOVE, 10);
+        assertEvent(events.poll(), DELETE, 1);
+
     }
 }

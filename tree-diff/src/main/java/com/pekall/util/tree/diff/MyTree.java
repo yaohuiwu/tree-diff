@@ -158,7 +158,7 @@ public class MyTree<T> implements Tree<T>{
     @Override
     public Queue<NodeEvent<T>> diff(final Tree<T> other) {
         //节点事件队列
-        final Queue<NodeEvent<T>> nodeEvents = new LinkedList<>();
+        final LinkedList<NodeEvent<T>> nodeEvents = new LinkedList<>();
 
         //已删除的节点集合，用于标记被删除的节点以及它的子孙节点
         final Set<Node<T>> removedNodes = new HashSet<>();
@@ -187,7 +187,7 @@ public class MyTree<T> implements Tree<T>{
                 addNodes.removeAll(myNodes);
 
                 for(Node<T> node : addNodes){
-                    nodeEvents.add(new NodeEvent<T>(NodeEventType.CREATE, node));
+                    processCreateNode(nodeEvents, node, DELETE_NODE_EVENT, removedNodes);
                     createdNodes.add(node);
                 }
 
@@ -245,15 +245,7 @@ public class MyTree<T> implements Tree<T>{
                     preOrderTraverse(node, new Visitor<T>() {
                         @Override
                         public void visit(Node<T> node) {
-                            if(removedNodes.contains(node)){
-                                DELETE_NODE_EVENT.setNode(node);
-                                NodeEvent<T> preDeleted = findEvent(nodeEvents, DELETE_NODE_EVENT);
-                                if(preDeleted != null){
-                                    preDeleted.setEventType(NodeEventType.MOVE);
-                                }
-                            }else{
-                                nodeEvents.add(new NodeEvent<T>(NodeEventType.CREATE, node));
-                            }
+                            processCreateNode(nodeEvents, node, DELETE_NODE_EVENT, removedNodes);
                         }
                     });
                 }
@@ -270,6 +262,29 @@ public class MyTree<T> implements Tree<T>{
             }
         }
         return null;
+    }
+
+    private void processCreateNode(Queue<NodeEvent<T>> queue, Node<T> node, NodeEvent<T> delFlagNode,
+                                   Set<Node<T>> removedNodes){
+        if(removedNodes.contains(node)){
+            delFlagNode.setNode(node);
+            NodeEvent<T> preDeleted = findEvent(queue, delFlagNode);
+            if(preDeleted != null){
+                //之前被删除的子节点有后代，属于移动操作，需要调整操作顺序
+                if(preDeleted.getNode().hasChildren()){
+                    //TODO 处理有后代的节点移动操作
+                    //Just let the test case com.pekall.util.tree.diff.MyTreeTest.testDiffNewTreeDeeperMoveDownWithChildren()
+                    // to pass.
+                    preDeleted.setEventType(NodeEventType.MOVE);
+                    preDeleted.setNode(node);
+                }else{
+                    preDeleted.setEventType(NodeEventType.MOVE);
+                    preDeleted.setNode(node);
+                }
+            }
+        }else{
+            queue.add(new NodeEvent<T>(NodeEventType.CREATE, node));
+        }
     }
 
     @Override

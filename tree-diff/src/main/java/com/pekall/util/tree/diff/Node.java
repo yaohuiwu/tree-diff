@@ -43,6 +43,16 @@ public class Node<T> {
         return path;
     }
 
+    public List<Node<T>> getAncestors(){
+        List<Node<T>> path = new ArrayList<>();
+        Node<T> nodeParent = parent;
+        while (nodeParent != null){
+            path.add(parent);
+            nodeParent = nodeParent.parent;
+        }
+        return path;
+    }
+
     public int getLevel(){
         int level = 1;
         Node<T> nodeParent = parent;
