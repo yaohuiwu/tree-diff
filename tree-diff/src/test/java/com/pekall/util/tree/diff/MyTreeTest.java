@@ -22,9 +22,19 @@ public class MyTreeTest {
 
     /**
      * 示例tree.
-     * <p>
-     *     (1, ((2, (5, 6)), (3, (7, 8)), (4, (9, 10)))
-     * </p>
+     *
+     * <pre>
+     *     1
+                2
+                    5
+                    6
+                3
+                    7
+                    8
+                4
+                    9
+                    10
+     *
      * @return a sample tree.
      */
     private static Tree<Integer> sampleTree(){
@@ -117,10 +127,7 @@ public class MyTreeTest {
     }
 
     @Test
-    public void testDiff0() {
-        //new tree
-        // (1, (2, 3))
-
+    public void testDiffOldTreeDeeper() {
         Tree<Integer> newTree = new MyTree<>(1);
         newTree.addNode(newTree.getRoot(), 2);
         newTree.addNode(newTree.getRoot(), 3);
@@ -133,6 +140,7 @@ public class MyTreeTest {
 
         assertNotNull(events);
         assertFalse(events.isEmpty());
+        assertThat(events.size(), is(10));
 
         assertEvent(events.poll(), UPDATE, 1);
         assertEvent(events.poll(), UPDATE, 2);
@@ -148,9 +156,24 @@ public class MyTreeTest {
     }
 
     @Test
-    public void testDiff1() {
-        //new tree
-        // (1, (2, 3, 8))
+    public void testDiffOldTreeDeeperMoveUpWithNoChildren() {
+        /*
+            1
+                2
+                    5
+                    6
+                3
+                    7
+                    8
+                4
+                    9
+                    10
+
+            1
+                2
+                3
+                8
+         */
 
         Tree<Integer> newTree = new MyTree<>(1);
         newTree.addNode(newTree.getRoot(), 2);
@@ -166,7 +189,7 @@ public class MyTreeTest {
         assertThat(events.size(), is(10));
 
         assertEvent(events.poll(), UPDATE, 1);
-        assertEvent(events.poll(), CREATE, 8);
+        assertEvent(events.poll(), MOVE, 8);
         assertEvent(events.poll(), UPDATE, 2);
         assertEvent(events.poll(), UPDATE, 3);
         assertEvent(events.poll(), DELETE, 9);
@@ -175,5 +198,147 @@ public class MyTreeTest {
         assertEvent(events.poll(), DELETE, 5);
         assertEvent(events.poll(), DELETE, 6);
         assertEvent(events.poll(), DELETE, 7);
+    }
+
+    @Test
+    public void testDiffOldTreeDeeperMoveUpWithChildren() {
+        /*
+        old tree:
+            1
+                2
+                    5
+                    6
+                3
+                    7
+                    8
+                        11
+                4
+                    9
+                    10
+        new tree:
+            1
+                2
+                3
+                8
+                11
+         */
+        Tree<Integer> myTree = new MyTree<>(1);
+        Node<Integer> node2 = myTree.addNode(myTree.getRoot(), 2);
+        Node<Integer> node3 = myTree.addNode(myTree.getRoot(), 3);
+        Node<Integer> node4 = myTree.addNode(myTree.getRoot(), 4);
+
+        myTree.addNode(node2, 5);
+        myTree.addNode(node2, 6);
+
+        myTree.addNode(node3, 7);
+        Node<Integer> node8 = myTree.addNode(node3, 8);
+        myTree.addNode(node8, 11);
+
+        myTree.addNode(node4, 9);
+        myTree.addNode(node4, 10);
+
+        System.out.println(myTree);
+
+        Tree<Integer> newTree = new MyTree<>(1);
+        newTree.addNode(newTree.getRoot(), 2);
+        newTree.addNode(newTree.getRoot(), 3);
+        newTree.addNode(newTree.getRoot(), 8);
+        newTree.addNode(newTree.getRoot(), 11);
+
+        System.out.println(newTree);
+
+        Queue<NodeEvent<Integer>> events = myTree.diff(newTree);
+
+        System.out.println(events);
+
+        assertThat(events.size(), is(11));
+
+        assertEvent(events.poll(), UPDATE, 1);
+        assertEvent(events.poll(), MOVE, 8);
+        assertEvent(events.poll(), MOVE, 11);
+        assertEvent(events.poll(), UPDATE, 2);
+        assertEvent(events.poll(), UPDATE, 3);
+        assertEvent(events.poll(), DELETE, 9);
+        assertEvent(events.poll(), DELETE, 10);
+        assertEvent(events.poll(), DELETE, 4);
+        assertEvent(events.poll(), DELETE, 5);
+        assertEvent(events.poll(), DELETE, 6);
+        assertEvent(events.poll(), DELETE, 7);
+    }
+
+    @Test
+    public void testDiffNewTreeDeeperMoveDownWithNoChildren() {
+        Tree<Integer> myTree = new MyTree<>(1);
+        Node<Integer> node2 = myTree.addNode(myTree.getRoot(), 2);
+
+        myTree.addNode(myTree.getRoot(), 3);
+        myTree.addNode(myTree.getRoot(), 4);
+
+        Node<Integer> node5 = myTree.addNode(node2, 5);
+        myTree.addNode(node2, 6);
+
+        myTree.addNode(node5, 7);
+        Node<Integer> node8 = myTree.addNode(node5, 8);
+        myTree.addNode(node5, 11);
+
+        myTree.addNode(node8, 9);
+        myTree.addNode(node8, 10);
+
+        System.out.println(myTree);
+
+        Queue<NodeEvent<Integer>> events = oldTree.diff(myTree);
+
+        System.out.println(events);
+
+        assertEvent(events.poll(), UPDATE, 1);
+        assertEvent(events.poll(), UPDATE, 2);
+        assertEvent(events.poll(), UPDATE, 3);
+        assertEvent(events.poll(), UPDATE, 4);
+        assertEvent(events.poll(), UPDATE, 5);
+        assertEvent(events.poll(), UPDATE, 6);
+
+        assertEvent(events.poll(), MOVE, 7);
+        assertEvent(events.poll(), MOVE, 8);
+        assertEvent(events.poll(), MOVE, 9);
+        assertEvent(events.poll(), MOVE, 10);
+        assertEvent(events.poll(), CREATE, 11);
+    }
+
+    @Test
+    public void testDiffNewTreeDeeperMoveDownWithChildren() {
+        Tree<Integer> myTree = new MyTree<>(1);
+        Node<Integer> node2 = myTree.addNode(myTree.getRoot(), 2);
+        myTree.addNode(myTree.getRoot(), 4);
+
+        Node<Integer> node5 = myTree.addNode(node2, 5);
+        myTree.addNode(node2, 6);
+
+        myTree.addNode(node5, 7);
+        Node<Integer> node8 = myTree.addNode(node5, 8);
+        myTree.addNode(node5, 11);
+
+        myTree.addNode(node8, 3);
+        myTree.addNode(node8, 9);
+        myTree.addNode(node8, 10);
+
+        System.out.println(myTree);
+
+        Queue<NodeEvent<Integer>> events = oldTree.diff(myTree);
+
+        System.out.println(events);
+
+        assertEvent(events.poll(), UPDATE, 1);
+        assertEvent(events.poll(), UPDATE, 2);
+        assertEvent(events.poll(), UPDATE, 4);
+        assertEvent(events.poll(), MOVE, 7);
+        assertEvent(events.poll(), MOVE, 8);
+        assertEvent(events.poll(), MOVE, 3);
+
+        assertEvent(events.poll(), UPDATE, 5);
+        assertEvent(events.poll(), UPDATE, 6);
+
+        assertEvent(events.poll(), MOVE, 9);
+        assertEvent(events.poll(), MOVE, 10);
+        assertEvent(events.poll(), CREATE, 11);
     }
 }

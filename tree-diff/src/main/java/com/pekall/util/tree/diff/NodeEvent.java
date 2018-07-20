@@ -30,6 +30,10 @@ public class NodeEvent<T> {
         this.node = node;
     }
 
+    public void setEventType(NodeEventType eventType) {
+        this.eventType = eventType;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

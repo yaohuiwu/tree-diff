@@ -53,6 +53,10 @@ public class Node<T> {
         return level;
     }
 
+    public boolean hasChildren(){
+        return children == null || children.isEmpty();
+    }
+
     @Override
     public String toString() {
 

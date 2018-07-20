@@ -1,5 +1,7 @@
 package com.pekall.util.tree.diff;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -163,7 +165,8 @@ public class MyTree<T> implements Tree<T>{
         final Set<Node<T>> createdNodes = new HashSet<>();
 
         //标记事件。用于删除'假的'删除事件。
-        final NodeEvent<T> MOVE_NODE_EVENT = new NodeEvent<>(NodeEventType.DELETE, null);
+        final NodeEvent<T> DELETE_NODE_EVENT = new NodeEvent<>(NodeEventType.DELETE, null);
+        final NodeEvent<T> ADD_NODE_EVENT = new NodeEvent<>(NodeEventType.CREATE, null);
 
         int myDeep = getDeep();
         int otherDeep = other.getDeep();
@@ -184,17 +187,8 @@ public class MyTree<T> implements Tree<T>{
                 addNodes.removeAll(myNodes);
 
                 for(Node<T> node : addNodes){
-                    //The node has bean deleted before but now is going to be created,
-                    // so it should be a MOVE event.
-                    if(removedNodes.contains(node)){
-                        nodeEvents.add(new NodeEvent<T>(NodeEventType.MOVE, node));
-                        //remove the DELETE event from queue added previously.
-                        MOVE_NODE_EVENT.setNode(node);
-                        nodeEvents.remove(MOVE_NODE_EVENT);
-                    }else{
-                        nodeEvents.add(new NodeEvent<T>(NodeEventType.CREATE, node));
-                        createdNodes.add(node);
-                    }
+                    nodeEvents.add(new NodeEvent<T>(NodeEventType.CREATE, node));
+                    createdNodes.add(node);
                 }
 
                 //update nodes
@@ -209,7 +203,6 @@ public class MyTree<T> implements Tree<T>{
                     postOrderTraverse(node, new Visitor<T>() {
                         @Override
                         public void visit(Node<T> node) {
-
                             nodeEvents.add(new NodeEvent<T>(NodeEventType.DELETE, node));
                             removedNodes.add(node);
                         }
@@ -227,11 +220,15 @@ public class MyTree<T> implements Tree<T>{
                     postOrderTraverse(node, new Visitor<T>() {
                         @Override
                         public void visit(Node<T> node) {
+                            //之前未删除
                             if(!removedNodes.contains(node)){
-
-                                //nodes that created at common level now should be replaced with MOVE
-                                if(createdNodes.contains(node)){
-                                    //TODO replace with MOVE
+                                //之前新增
+                                if(createdNodes.contains(node)){//现在要删除，说明之前是一个move
+                                    ADD_NODE_EVENT.setNode(node);
+                                    NodeEvent<T> preCreatedEvent = findEvent(nodeEvents, ADD_NODE_EVENT);
+                                    if(preCreatedEvent != null){
+                                        preCreatedEvent.setEventType(NodeEventType.MOVE);
+                                    }
                                 }else{
                                     nodeEvents.add(new NodeEvent<T>(NodeEventType.DELETE, node));
                                 }
@@ -245,12 +242,15 @@ public class MyTree<T> implements Tree<T>{
             else if(otherDeep == maxDeep){
                 List<Node<T>> otherNodes = other.getByLevel(deep);
                 for(Node<T> node : otherNodes){
-                    postOrderTraverse(node, new Visitor<T>() {
+                    preOrderTraverse(node, new Visitor<T>() {
                         @Override
                         public void visit(Node<T> node) {
-                            //nodes that removed at common level now should be replaced with MOVE
                             if(removedNodes.contains(node)){
-                                //TODO replace with MOVE
+                                DELETE_NODE_EVENT.setNode(node);
+                                NodeEvent<T> preDeleted = findEvent(nodeEvents, DELETE_NODE_EVENT);
+                                if(preDeleted != null){
+                                    preDeleted.setEventType(NodeEventType.MOVE);
+                                }
                             }else{
                                 nodeEvents.add(new NodeEvent<T>(NodeEventType.CREATE, node));
                             }
@@ -263,13 +263,24 @@ public class MyTree<T> implements Tree<T>{
         return nodeEvents;
     }
 
+    private NodeEvent<T> findEvent(Queue<NodeEvent<T>> queue, NodeEvent<T> event){
+        for(NodeEvent<T> nodeEvent : queue){
+            if(nodeEvent.equals(event)){
+                return nodeEvent;
+            }
+        }
+        return null;
+    }
+
     @Override
     public String toString() {
         final StringBuilder s = new StringBuilder();
         preOrderTraverse(root, new Visitor<T>() {
             @Override
             public void visit(Node<T> node) {
-                s.append(node.toString()).append("\n");
+                s.append(StringUtils.repeat("\t", node.getLevel()-1))
+                        .append(node.key)
+                        .append("\n");
             }
         });
 
