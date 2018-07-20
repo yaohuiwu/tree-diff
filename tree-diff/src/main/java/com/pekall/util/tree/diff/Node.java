@@ -54,7 +54,7 @@ public class Node<T> {
     }
 
     public boolean hasChildren(){
-        return children == null || children.isEmpty();
+        return children != null && !children.isEmpty();
     }
 
     @Override

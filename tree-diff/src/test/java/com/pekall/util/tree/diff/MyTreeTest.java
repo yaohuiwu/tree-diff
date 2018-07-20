@@ -117,6 +117,14 @@ public class MyTreeTest {
     }
 
     @Test
+    public void testHasChildren() {
+        assertTrue(oldTree.getRoot().hasChildren());
+
+        Node<Integer> node11 = oldTree.addNode(oldTree.getRoot(), 11);
+        assertFalse(node11.hasChildren());
+    }
+
+    @Test
     public void testDiffSelf() {
         Queue<NodeEvent<Integer>> events = oldTree.diff(oldTree);
 
