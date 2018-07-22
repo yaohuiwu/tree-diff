@@ -270,17 +270,10 @@ public class MyTree<T> implements Tree<T>{
             delFlagNode.setNode(node);
             NodeEvent<T> preDeleted = findEvent(queue, delFlagNode);
             if(preDeleted != null){
-                //之前被删除的子节点有后代，属于移动操作，需要调整操作顺序
-                if(preDeleted.getNode().hasChildren()){
-                    //TODO 处理有后代的节点移动操作
-                    //Just let the test case com.pekall.util.tree.diff.MyTreeTest.testDiffNewTreeDeeperMoveDownWithChildren()
-                    // to pass.
-                    preDeleted.setEventType(NodeEventType.MOVE);
-                    preDeleted.setNode(node);
-                }else{
-                    preDeleted.setEventType(NodeEventType.MOVE);
-                    preDeleted.setNode(node);
-                }
+                //Since the nodes which was deleted by post order, there is no need to deal with its descendants when
+                // dealing with current node.
+                preDeleted.setEventType(NodeEventType.MOVE);
+                preDeleted.setNode(node);
             }
         }else{
             queue.add(new NodeEvent<T>(NodeEventType.CREATE, node));

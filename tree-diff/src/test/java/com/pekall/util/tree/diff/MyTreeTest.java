@@ -351,7 +351,6 @@ public class MyTreeTest {
         assertEvent(events.poll(), CREATE, 11);
     }
 
-    @Ignore
     @Test
     public void testDiffEqualDepthWithDifferentRoot() {
 
@@ -376,15 +375,21 @@ public class MyTreeTest {
         System.out.println(events);
 
         assertEvent(events.poll(), CREATE, 21);
-        assertEvent(events.poll(), MOVE, 2);
+
+        //the parent of node 5 and 6 is not changed, so the following two actions should be ignored.
         assertEvent(events.poll(), MOVE, 5);
         assertEvent(events.poll(), MOVE, 6);
-        assertEvent(events.poll(), MOVE, 3);
+
+        assertEvent(events.poll(), MOVE, 2);
+
         assertEvent(events.poll(), MOVE, 7);
         assertEvent(events.poll(), MOVE, 8);
-        assertEvent(events.poll(), MOVE, 4);
+        assertEvent(events.poll(), MOVE, 3);
+
         assertEvent(events.poll(), MOVE, 9);
         assertEvent(events.poll(), MOVE, 10);
+        assertEvent(events.poll(), MOVE, 4);
+
         assertEvent(events.poll(), DELETE, 1);
 
     }
